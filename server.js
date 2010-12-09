@@ -1,3 +1,4 @@
+var path = require('path')
 process.title = 'node-wargames';
 process.addListener('uncaughtException', function (err, stack) {
 	console.log('Caught exception: ' + err);
@@ -10,7 +11,7 @@ var express = require('express');
 var assets = assetManager({
 	'js': {
 		'route': /\/static\/js\/[0-9]+\/.*\.js/
-		, 'path': './public/js/'
+		, 'path': path.join(__dirname, 'public/js/')
 		, 'dataType': 'js'
 		, 'files': [
 			'http://code.jquery.com/jquery-latest.js'
@@ -32,7 +33,7 @@ var assets = assetManager({
 		}
 	}, 'css': {
 		'route': /\/static\/css\/[0-9]+\/.*\.css/
-		, 'path': './public/css/'
+		, 'path': path.join(__dirname, 'public/css/')
 		, 'dataType': 'css'
 		, 'files': [
 			'wargames.css'
@@ -40,18 +41,18 @@ var assets = assetManager({
 	}
 });
 
-var port = 5656;
+var port = process.env.POLLA_PORT || 8585;
 var app = module.exports = express.createServer();
 
 app.configure(function() {
 	app.set('view engine', 'ejs');
-	app.set('views', __dirname + '/views');
+	app.set('views', path.join(__dirname, 'views'));
 });
 
 app.configure(function() {
 	app.use(connect.logger({ format: ':req[x-real-ip]\t:status\t:method\t:url\t' }));
 	app.use(assets);
-	app.use(connect.staticProvider(__dirname + '/public'));
+	app.use(connect.staticProvider(path.join(__dirname, 'public')));
 });
 
 app.dynamicHelpers({
@@ -63,14 +64,15 @@ app.get(/.*/, function(req, res) {
 	res.render('layout');
 });
 
-app.listen(port, null);
+app.listen(port, process.env.POLLA_HOST || 'wargamez.stagas.com');
 
-var Wargames = require(__dirname+'/lib/wargames');
+var Wargames = require(path.join(__dirname, 'lib/wargames'));
 new Wargames(app, {
-	ircNetwork: 'irc.freenode.net'
-	, ircChannel: '#Node.js'
+	ircNetwork: 'global.irc.gr'
+	, ircChannel: '#hellas'
 	, ircBotNick: 'MrWarGames'
 	, ircUserName: 'MrWarGames'
 	, ircRealName: 'MrWarGames'
-	, cachePath: '/tmp/cache.json'
+  , ircPort: 6667
+	, cachePath: path.join(__dirname, 'cache.json')
 });

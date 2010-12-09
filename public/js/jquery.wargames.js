@@ -1,4 +1,4 @@
-WEB_SOCKET_SWF_LOCATION = '/swf/WebSocketMain.swf';
+WEB_SOCKET_SWF_LOCATION = 'http://wargamez.stagas.com:5969/swf/WebSocketMain.swf';
 
 (function () {
 	if (!window.WebSocket) {
@@ -13,6 +13,9 @@ WEB_SOCKET_SWF_LOCATION = '/swf/WebSocketMain.swf';
 		});
 	});
 
+  var yOffset = 220
+    , xOffset = 10
+    
 	function ircMap(options) {
 		var bowArcHeight = options.bowArcHeight || 200;
 		var bowArcHeightVsDistance = options.bowArcHeightVsDistance || 400;
@@ -22,7 +25,7 @@ WEB_SOCKET_SWF_LOCATION = '/swf/WebSocketMain.swf';
 		var users = {};
 		var markers = {};
 		var $map = $('#map');
-		var mapNewWidth = $map.width() * 0.9;
+		var mapNewWidth = Math.min($map.width() * 0.9, 1180);
 		var mapNewHeight = mapNewWidth * 0.9;
 		var mapHeight = $map.height(mapNewHeight).height();
 		var mapWidth = $map.width(mapNewWidth).width();
@@ -33,20 +36,20 @@ WEB_SOCKET_SWF_LOCATION = '/swf/WebSocketMain.swf';
 		$('<div id="map-canvas"/>').appendTo('#map').width(mapWidth).height(mapHeight);
 
 		var map = Raphael($('#map-canvas').get(0), mapWidth, mapHeight);
-		map.canvas.setAttribute('viewBox', '0 0 567 369');
+		map.canvas.setAttribute('viewBox', '0 0 710 666');
 
-		var mapSourceDiffX = (567 / $('#map').width());
-		var mapSourceDiffY = (369 / $('#map').height());
+		var mapSourceDiffX = (710 / $('#map').width());
+		var mapSourceDiffY = (666 / $('#map').height());
 
 		map.path(mapVector).attr({
 			stroke: "#333"
 		}).attr({
-			'stroke-width': 0.7
-		});
+			'stroke-width': 1.0
+		}).rotate(0, true);
 
 		$map.addClass('centered').css({
-			'margin-top': '-' + ((mapHeight / 2) + 200) + 'px',
-			'margin-left': '-' + (mapWidth / 2) + 'px'
+			'margin-top': '-' + ((mapHeight / 2) + yOffset) + 'px',
+			'margin-left': '-' + ((mapWidth / 2) + xOffset) + 'px'
 		});
 
 		$('.marker').live('mouseover', function (event) {
@@ -204,15 +207,21 @@ WEB_SOCKET_SWF_LOCATION = '/swf/WebSocketMain.swf';
 			var y = Math.log(Math.tan((lat / 2) + (Math.PI / 4)));
 			y = (mapHeight / 2) - (mapWidth * y / (2 * Math.PI));
 
+      var offsetX = 0.2511
+        , offsetY = 0.1568
+        , scaleX = 31.5
+        , scaleY = 33.3
+        
 			if (!mapOffsetX) {
-				mapOffsetX = mapWidth * 0.026;
+				mapOffsetX = (mapWidth * offsetX) * scaleX;
 			}
 			if (!mapOffsetY) {
-				mapOffsetY = mapHeight * 0.141;
+				mapOffsetY = (mapHeight * offsetY) * scaleY;
 			}
+      
 			return {
-				x: (x - mapOffsetX) * 0.97,
-				y: (y + mapOffsetY + 200),
+				x: (((x * scaleX) + xOffset) - ((scaleX * (mapWidth * 0.3)))) - mapOffsetX,
+				y: (((y * scaleY) + yOffset) - ((scaleY * (mapHeight * 0.2)))) - mapOffsetY,
 				xRaw: x,
 				yRaw: y
 			};
@@ -231,10 +240,10 @@ WEB_SOCKET_SWF_LOCATION = '/swf/WebSocketMain.swf';
 			sender = markers[sender];
 			reciever = markers[reciever];
 
-			var x1 = Math.floor(sender.x * mapSourceDiffX);
-			var y1 = (Math.floor((sender.y - 200) * mapSourceDiffY) * 1.4) - 73;
-			var x2 = Math.floor(reciever.x * mapSourceDiffX) + 2;
-			var y2 = (Math.floor((reciever.y - 200) * mapSourceDiffY) * 1.4) - 73;
+			var x1 = Math.floor((sender.x - xOffset) * mapSourceDiffX * 1.041) - 7;
+			var y1 = (Math.floor((sender.y - yOffset) * mapSourceDiffY) * 1.01) + 9;
+			var x2 = Math.floor((reciever.x - xOffset) * mapSourceDiffX * 1.041) - 7;
+			var y2 = (Math.floor((reciever.y - yOffset) * mapSourceDiffY) * 1.01) + 9;
 			var dist = Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2)) * mapSourceDiffX;
 			var curviness = (dist / bowArcHeightVsDistance) * bowArcHeight;
 
@@ -301,7 +310,7 @@ WEB_SOCKET_SWF_LOCATION = '/swf/WebSocketMain.swf';
 
 		function initWebsocketConnection() {
 			var server = new io.Socket(null, {
-				'port': '#socketIoPort#'
+				'port': '5969'
 				, 'rememberTransport': true
 				, 'transports': [
 					'websocket'
@@ -366,5 +375,12 @@ WEB_SOCKET_SWF_LOCATION = '/swf/WebSocketMain.swf';
 			server.connect();
 		}
 		initWebsocketConnection();
+  /*  
+  setInterval(function() {
+    var m = Object.keys(markers)
+    linkMarkers(m[ Math.floor(Math.random() * m.length) ], m[ Math.floor(Math.random() * m.length) ])
+  }, 100)
+  */
 	}
+  
 })();
