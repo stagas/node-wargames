@@ -50,9 +50,13 @@ app.configure(function() {
 });
 
 app.configure(function() {
+  app.use(function(req, res, next) {
+    req.headers['x-real-ip'] = req.headers['x-real-ip'] || req.headers.ip || req.connection.remoteAddress
+    next()
+  })
 	app.use(connect.logger({ format: ':req[x-real-ip]\t:status\t:method\t:url\t' }));
 	app.use(assets);
-	app.use(connect.staticProvider(path.join(__dirname, 'public')));
+	app.use(connect.static(path.join(__dirname, 'public')));
 });
 
 app.dynamicHelpers({
@@ -64,7 +68,7 @@ app.get(/.*/, function(req, res) {
 	res.render('layout');
 });
 
-app.listen(port, process.env.POLLA_HOST || 'wargamez.stagas.com');
+app.listen(port, process.env.POLLA_HOST || 'localhost');
 
 var Wargames = require(path.join(__dirname, 'lib/wargames'));
 new Wargames(app, {
@@ -75,4 +79,4 @@ new Wargames(app, {
 	, ircRealName: 'MrWarGames'
   , ircPort: 6667
 	, cachePath: path.join(__dirname, 'cache.json')
-});
+}, process.env.POLLA_HOST || 'localhost');
